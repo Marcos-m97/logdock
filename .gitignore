@@ -1,0 +1,48 @@
+.venv/
+venv/
+.env
+teste.py
+**/*registros/
+app/core/control_files/edicao.txt
+app/core/control_files/*.txt
+/historico_de_edicoes/
+/publicaveis/
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+
+logs
+**/*records
+tests.py
+info.py
+**/*info
+**/*.serverless
+.python_packages
+
+# Environment variables
+.env.*
+!.env.example
+
+# Python tooling and test caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Python packaging artifacts
+build/
+dist/
+*.egg-info/
+
+# Runtime logs
+*.log
+
+# Local operating-system files
+.DS_Store
+Thumbs.db
+
+# vscode
+.vscode
