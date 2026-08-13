@@ -1,11 +1,14 @@
 {
     "app_name" : "surfmetrics",
+    
     "persistence_enabled" : false,
     "persistence_provider" : "",
     "persistence_connection_string" : "",
     "persistence_container" : "",
+    
     "notification_enabled" : false,
     "notification_provider" : "",
     "notification_chat_id" : "",
-    "log_level" : ""
+    
+    "log_level" : "DEBUG"
 }
