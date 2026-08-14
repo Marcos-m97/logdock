@@ -1,7 +1,6 @@
 import logging
-from config.suported import SUPORTED_LEVELS
 from config.loader import load_settings
-from config.validator import validate_suported
+from config. settings import TelegramNotification
 
 class LogDock:
 
@@ -17,14 +16,15 @@ class LogDock:
 
             # print(f"DEBUG: {logdock_settings}")
 
-            level_name = self.logdock_settings.level
-            notificaion_provider = self.logdock_settings.notification.provider
-            persistence_provider = self.logdock_settings.persistence.provider
+            # level_name = self.logdock_settings.level
+            # notificaion_provider = self.logdock_settings.notification.provider
+            # persistence_provider = self.logdock_settings.persistence.provider
 
-            # Validar configs, se config qualqur config invalida seta logger padrão: 
-            validate_suported(level_name, notificaion_provider, persistence_provider)
+            # # Validar configs, se config qualqur config invalida seta logger padrão: 
+            # validate_suported(level_name, notificaion_provider, persistence_provider)
 
-            level = SUPORTED_LEVELS.get(level_name)
+            level = self.logdock_settings.level
+            app_name = self.logdock_settings.app_name
            
             # Configura logging padrão
             logging.basicConfig(
@@ -33,8 +33,8 @@ class LogDock:
                 # format="%(levelname)s | %(name)s | %(message)s",
             )
 
-            self.logger = logging.getLogger(self.logdock_settings.app_name)
-
+            self.logger = logging.getLogger(app_name)
+            
             self.logger.setLevel(level)
 
             logging.getLogger("urllib3").setLevel(logging.WARNING)
@@ -98,9 +98,21 @@ class LogDock:
         Roteador de noticações; 
         - Cada provider de notificação suportado deve ser chamado aqui 
         """
-        notification_provider = self.logdock_settings.notification.provider
+
+        # Validar se está enebled se não não deve funcionar mesmo que chamado
+        is_enabled = self.logdock_settings.notification.enabled
+
+        if not is_enabled:
+            self.info("Notificação está desabilitado")
+            return
         
-        # Telegram 
+        # Validar qual o tipo de provider com is_instance 
+        provider = self.logdock_settings.notification
+
+        # Telegram
+        if isinstance(provider, TelegramNotification):
+            pass
+         
 
         # Whatsapp 
         

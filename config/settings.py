@@ -1,33 +1,45 @@
 from dataclasses import dataclass
 from enum import StrEnum
 
+# ========================================================
+
+class NotificationProvider(StrEnum):
+    TELEGRAM = "TELEGRAM"
+    AZURE_FUNCTION = "AZURE_FUNCTION"
 
 @dataclass
 class Notification:
     enabled: bool = False
-    provider: str | None = None
-    chat_id: str | None = None
-
 
 @dataclass
 class AzureFunctionNotification(Notification):
     endpoint: str | None = None
 
 @dataclass
+class TelegramNotification(Notification):
+    token: str | None = None
+    chat_id: str | None = None
+    endpoint: str | None = None
+
+# ========================================================
+class PersistenceProvider(StrEnum):
+    AZURE_BLOB_STORAGE = "AZURE_BLOB_STORAGE"
+  
+@dataclass
 class Persistence:
     enabled: bool = False
-    provider: str | None = None
+
+@dataclass
+class AzureBlobStoragePersistence(Persistence):
     connection_string: str | None = None
     container: str | None = None
 
+# ========================================================
 class Levels(StrEnum):
     INFO: str = "INFO"
     DEBUG: str = "DEBUG"
-    WARNING:str = "WARNING"
-    ERROR : str = "ERROR"
-    CRITIAL_ERROR : str = "CRITICAL_ERROR"
 
-    
+# ========================================================
 @dataclass
 class LogDockSettings:
     app_name:str
