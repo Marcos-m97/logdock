@@ -1,41 +1,39 @@
 import logging
+from config.suported import SUPORTED_LEVELS
 from config.loader import load_settings
+from config.validator import validate_suported
 
 class LogDock:
 
-    SUPORTED_LEVELS = {
-    "INFO": logging.INFO,
-    "DEBUG": logging.DEBUG,
-    "WARNING": logging.WARNING,
-    "ERROR": logging.ERROR
-    }
-
+   
     # Adicionar suported persistence e notification (futuramente trasnformar em um factory ou register)
 
     def __init__(self):
         self.logger = None
 
         try:
-            logdock_settings = load_settings()
+            # Carrega configuraçõe
+            self.logdock_settings = load_settings()
 
             # print(f"DEBUG: {logdock_settings}")
 
-            # Configura logging padrão
-            level_name = logdock_settings.level
+            level_name = self.logdock_settings.level
+            notificaion_provider = self.logdock_settings.notification.provider
+            persistence_provider = self.logdock_settings.persistence.provider
 
-            level = self.SUPORTED_LEVELS.get(level_name, logging.INFO)
+            # Validar configs, se config qualqur config invalida seta logger padrão: 
+            validate_suported(level_name, notificaion_provider, persistence_provider)
+
+            level = SUPORTED_LEVELS.get(level_name)
            
-            # Adicionar hora, suporte para configurar fuso e nivel de hora em (secs, min, hora, dia, milisec etc) via configjson
-            # Adicionar origem - apenas o arquivo de onde o log esta sendo emitido sem caminho raiz. 
-            # Habilitar opção para ligar desligar o nome do app no log
-            # Adicionar suporte para logs com quebra de linhas: ex uma lista onde cada item é uma linha.
+            # Configura logging padrão
             logging.basicConfig(
                 level=level,
                 format="%(levelname)s | %(message)s",
                 # format="%(levelname)s | %(name)s | %(message)s",
             )
 
-            self.logger = logging.getLogger(logdock_settings.app_name)
+            self.logger = logging.getLogger(self.logdock_settings.app_name)
 
             self.logger.setLevel(level)
 
@@ -59,6 +57,13 @@ class LogDock:
                 f"Erro: {error}"
             )
     # ================================================================================
+    # Adicionar hora, suporte para configurar fuso e nivel de hora em (secs, min, hora, dia, milisec etc) via configjson
+    # Adicionar origem - apenas o arquivo de onde o log esta sendo emitido sem caminho raiz. 
+    # Habilitar opção para ligar desligar o nome do app no log
+    # Adicionar suporte para logs com quebra de linhas: ex uma lista onde cada item é uma linha.
+
+
+
     # region Métdos de log
     # Níveis têm uma hierarquia. Com level=logging.INFO, o logger mostra mensagens de INFO para cima:
         # DEBUG    = 10  → oculto
@@ -79,6 +84,7 @@ class LogDock:
     # Só aparece o log de debug se o log_level for DEBUG (porém debug é nativo de logging, ver um outro nome para filtrar verbosisda)
     def debug(self, message, notify=False):
         self.logger.debug(message) 
+    
     # endregion
 
     # ================================================================================
@@ -89,10 +95,20 @@ class LogDock:
     ):
 
         """
-        Envia notificação pra um canal de comunicação (realiza o request). (Seja erro ou outros)
-        implementar futuramente
+        Roteador de noticações; 
+        - Cada provider de notificação suportado deve ser chamado aqui 
         """
+        notification_provider = self.logdock_settings.notification.provider
+        
+        # Telegram 
+
+        # Whatsapp 
+        
+        # Azure function
+
         pass
+
+
     # endregion
 
     # ================================================================================

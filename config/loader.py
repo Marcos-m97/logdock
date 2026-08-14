@@ -15,15 +15,28 @@ def load_settings():
         settings = json.load(file)
 
         app_name = settings["app_name"]
+
         persistence_enabled= settings["persistence_enabled"] 
         persistence_provider=settings["persistence_provider"] 
         persistence_connection_string=settings["persistence_connection_string"] 
         persistence_container=settings["persistence_container"] 
+
         notification_enabled=settings["notification_enabled"] 
         notification_provider=settings["notification_provider"] 
         notification_chat_id=settings["notification_chat_id"] 
+
         log_level=str(settings["log_level"]).strip().upper() or "INFO"
 
+        # =============================================================
+        # region Notificação 
+        notification = Notification(
+            enabled=notification_enabled,
+            provider=notification_provider,
+            chat_id=notification_chat_id
+        )
+
+        # =============================================================
+        # region Persistencia
         persistence = Persistence(
             enabled=persistence_enabled,
             provider=persistence_provider,
@@ -31,14 +44,12 @@ def load_settings():
             container=persistence_container
         )
 
-        notification = Notification(
-            enabled=notification_enabled,
-            provider=notification_provider,
-            chat_id=notification_chat_id
-        )
-
+        # =============================================================
+        # region Level do log 
         level = Levels(log_level)
 
+        # =============================================================
+        # region Montar setting final
         logdock_settings = LogDockSettings(
             app_name=app_name,
             persistence=persistence,
