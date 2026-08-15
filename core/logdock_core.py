@@ -1,6 +1,6 @@
 import logging
 from config.loader import load_settings
-from config. settings import TelegramNotification
+from config. settings import TelegramNotification, AzureFunctionNotification
 
 class LogDock:
 
@@ -74,17 +74,29 @@ class LogDock:
     
     def info(self, message, notify=False):
         self.logger.info(message)
-        
+
+        if notify:
+            pass
+
+    # ----------------------------------------
     def error(self, message, notify=False):
         self.logger.error(message)
-
+        if notify:
+            pass
+        
+    # ----------------------------------------
     def warning(self, message, notify=False):
         self.logger.warning(message)
-
+        if notify:
+            pass
+            
+    # ----------------------------------------
     # Só aparece o log de debug se o log_level for DEBUG (porém debug é nativo de logging, ver um outro nome para filtrar verbosisda)
     def debug(self, message, notify=False):
         self.logger.debug(message) 
-    
+        if notify:
+            pass
+        
     # endregion
 
     # ================================================================================
@@ -103,7 +115,7 @@ class LogDock:
         is_enabled = self.logdock_settings.notification.enabled
 
         if not is_enabled:
-            self.info("Notificação está desabilitado")
+            self.info("Notificação está desabilitada")
             return
         
         # Validar qual o tipo de provider com is_instance 
@@ -111,16 +123,15 @@ class LogDock:
 
         # Telegram
         if isinstance(provider, TelegramNotification):
+            # print("DEV DEBUG - NOTIFICAÇÃO VIA TELEGRAM")
             pass
-         
+
+        # Azurefunction
+        if isinstance(provider, AzureFunctionNotification):
+             # print("DEV DEBUG - NOTIFICAÇÃO VIA AZURE FUNCTION")
+            pass
 
         # Whatsapp 
-        
-        # Azure function
-
-        pass
-
-
     # endregion
 
     # ================================================================================
