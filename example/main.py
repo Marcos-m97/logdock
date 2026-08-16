@@ -8,10 +8,14 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from core.logdock_core import LogDock 
 
-
 logdock = LogDock()
 
 logdock.info("teste info")
+
 logdock.error("teste erro")
+
+logdock.error("teste erro com notificação", notify=True)
+
 logdock.debug("teste debug")
+
 logdock.warning("teste warning")

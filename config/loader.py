@@ -26,10 +26,10 @@ def load_settings():
     with config_path.open("r", encoding="utf-8") as file:
         settings = json.load(file)
 
-        app_name = settings["app_name"]
+        app_name = settings["app_name"]                                                 # Nome do app
 
-        notification_enabled=settings["notification_enabled"] 
-        notification_provider=settings["notification_provider"] 
+        notification_enabled=settings["notification_enabled"]                           # Notificação habilitada | desabilitada
+        notification_provider=settings["notification_provider"]                         # Provider de notificação 
         notification_chat_id=settings["notification_chat_id"]
 
         persistence_enabled= settings["persistence_enabled"] 
@@ -45,7 +45,10 @@ def load_settings():
 
         if notification_enabled:
 
+            # Validação de providers suportados
             try:
+                # NotificationProvider é um strEnum com os providers suportados
+                # ao instanciar a classe se ela não estiver cadastrada volta value error
                 notification_provider = NotificationProvider(notification_provider)
             except ValueError:
                 raise InvalidSettingsException(
@@ -54,6 +57,9 @@ def load_settings():
                 )
 
             # Instanciar notification com base no provider identificado: 
+            # as settings finais vão carregar em notification a instancia 
+            # do provider configurado no json de settings.
+            # Depois o método notify() do core verifica a instancia recebida para utilizar os dados corretos
             match notification_provider:
                 case NotificationProvider.AZURE_FUNCTION:
                     notification = AzureFunctionNotification(
@@ -68,6 +74,8 @@ def load_settings():
                         )
 
         else:
+            # Caso notificação esteja desabilitado, notification recebe a classe base que contém
+            # apenas enabled = False
             notification = Notification()
 
         # =============================================================
@@ -107,8 +115,7 @@ def load_settings():
             )
         
         # =============================================================
-        # region Montar setting
-        
+        # region Montar setting final
         logdock_settings = LogDockSettings(
             app_name=app_name,
             persistence=persistence,
