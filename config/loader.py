@@ -32,7 +32,7 @@ def load_settings():
         notification_provider = settings["notification_provider"]                         # Provider de notificação 
         notification_endpoint = settings["notification_endpoint"]
 
-        notification_telegram_token = settings["notification_telegram_chat_id"]
+        notification_telegram_token = settings["notification_telegram_token"]
         notification_telegram_chat_id = settings["notification_telegram_chat_id"]
 
         persistence_enabled = settings["persistence_enabled"] 
@@ -67,15 +67,16 @@ def load_settings():
                 case NotificationProvider.AZURE_FUNCTION:
                     notification = AzureFunctionNotification(
                         enabled=True,
+                        provider=NotificationProvider.AZURE_FUNCTION,
                         endpoint=notification_endpoint
                         )
 
                 case NotificationProvider.TELEGRAM:
                     notification = TelegramNotification(
-                        enabled=True, 
+                        enabled=True,
+                        provider=NotificationProvider.TELEGRAM, 
                         token=notification_telegram_token, 
-                        chat_id=notification_telegram_chat_id, 
-                        endpoint=notification_endpoint
+                        chat_id=notification_telegram_chat_id
                         )
 
         else:

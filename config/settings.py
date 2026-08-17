@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from enum import StrEnum
+from ..integrations.telegram_client import TelegramClient
 
 # ========================================================
 
@@ -10,6 +11,7 @@ class NotificationProvider(StrEnum):
 @dataclass
 class Notification:
     enabled: bool = False
+    provider: NotificationProvider | None = None
 
 @dataclass
 class AzureFunctionNotification(Notification):
@@ -19,7 +21,6 @@ class AzureFunctionNotification(Notification):
 class TelegramNotification(Notification):
     token: str | None = None
     chat_id: str | None = None
-    endpoint: str | None = None
 
 # ========================================================
 class PersistenceProvider(StrEnum):
@@ -46,3 +47,10 @@ class LogDockSettings:
     persistence: Persistence
     notification: Notification
     level: str = Levels.INFO
+
+@dataclass
+class LogDockIntegrations:
+    telegram_client: TelegramClient | None = None
+    azure_functions_client : str | None = None
+    azure_blob_storage_client : str | None = None
+

@@ -1,12 +1,12 @@
 {
     "app_name" : "surfmetrics",
     
-    "notification_enabled" : false,
-    "notification_provider" : "",
+    "notification_enabled" : true,
+    "notification_provider" : "TELEGRAM",
     "notification_endpoint" : "",
 
     "notification_telegram_token" : "",
-    "notification_telegram_chat_id" : "",
+    "notification_telegram_chat_id" : "-1003849727590",
 
     "persistence_enabled" : false,
     "persistence_provider" : "",

@@ -1,6 +1,7 @@
 import logging
 from ..config.loader import load_settings
-from ..config.settings import TelegramNotification, AzureFunctionNotification
+from ..register.register import register_integrations
+from ..config.settings import TelegramNotification, AzureFunctionNotification, NotificationProvider
 
 class LogDock:
 
@@ -11,6 +12,10 @@ class LogDock:
         try:
             # Carrega configuraçõe
             self.logdock_settings = load_settings()
+
+            integrations = register_integrations(logdock_settings=self.logdock_settings)
+
+            self.telegram_client = integrations.telegram_client
 
             # print(f"DEBUG: {logdock_settings}")
 
@@ -30,6 +35,9 @@ class LogDock:
 
             logging.getLogger("urllib3").setLevel(logging.WARNING)
             logging.getLogger("requests").setLevel(logging.WARNING)
+
+            # factory 
+
 
         except Exception as error:
 
@@ -104,34 +112,48 @@ class LogDock:
 
         # Validar se está eneabled se não não deve funcionar mesmo que chamado
         is_enabled = self.logdock_settings.notification.enabled
+        notification_provider = self.logdock_settings.notification.provider
+
         if not is_enabled:
             self.warning("Notificação solicitada porém esta desabilitada")
             return
+
+
+        if notification_provider == NotificationProvider.TELEGRAM:
+            self.telegram_client.post_telegram_message(message)
+
+        if notification_provider == NotificationProvider.AZURE_FUNCTION:
+            pass
+
         
-        # Validar qual o tipo de provider com isinstance
-        """
+    #     # Validar qual o tipo de provider com isinstance
+    #     """
 
-        """ 
-        provider = self.logdock_settings.notification
+    #     """ 
+    #     provider = self.logdock_settings.notification
 
-        # Telegram
-        if isinstance(provider, TelegramNotification):
-            # print("DEV DEBUG - NOTIFICAÇÃO VIA TELEGRAM")
-            endpoint = provider.endpoint
-            chat_id = provider.chat_id
-            token = provider.token
+    #     # Telegram
+    #     if isinstance(provider, TelegramNotification):
+    #         # print("DEV DEBUG - NOTIFICAÇÃO VIA TELEGRAM")
+    #         # endpoint = provider.endpoint
+    #         chat_id = provider.chat_id
+    #         token = provider.token
+    #         endpoint = f"https://api.telegram.org/bot{token}/sendMessage"
 
-            # Implementação em pasta|arquivo proprio
-            # send_message_telegram()
             
-        # Azurefunction
-        if isinstance(provider, AzureFunctionNotification):
-            # print("DEV DEBUG - NOTIFICAÇÃO VIA AZURE FUNCTION")
-            endpoint = provider.endpoint
-            # send_message_azurefunction()
+
+
+    #         # Implementação em pasta|arquivo proprio
+    #         # send_message_telegram()
             
-        # Whatsapp 
-    # endregion
+    #     # Azurefunction
+    #     if isinstance(provider, AzureFunctionNotification):
+    #         # print("DEV DEBUG - NOTIFICAÇÃO VIA AZURE FUNCTION")
+    #         endpoint = provider.endpoint
+    #         # send_message_azurefunction()
+            
+    #     # Whatsapp 
+    # # endregion
 
     # ================================================================================
     # region Persistencia
