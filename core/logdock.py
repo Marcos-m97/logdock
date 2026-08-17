@@ -1,9 +1,10 @@
 import logging
-from config.loader import load_settings
-from config. settings import TelegramNotification, AzureFunctionNotification
+from ..config.loader import load_settings
+from ..config.settings import TelegramNotification, AzureFunctionNotification
 
 class LogDock:
 
+    # region init 
     def __init__(self):
         self.logger = None
 
@@ -109,20 +110,26 @@ class LogDock:
         
         # Validar qual o tipo de provider com isinstance
         """
-        
+
         """ 
         provider = self.logdock_settings.notification
 
         # Telegram
         if isinstance(provider, TelegramNotification):
             # print("DEV DEBUG - NOTIFICAÇÃO VIA TELEGRAM")
-            pass
+            endpoint = provider.endpoint
+            chat_id = provider.chat_id
+            token = provider.token
 
+            # Implementação em pasta|arquivo proprio
+            # send_message_telegram()
+            
         # Azurefunction
         if isinstance(provider, AzureFunctionNotification):
-             # print("DEV DEBUG - NOTIFICAÇÃO VIA AZURE FUNCTION")
-            pass
-
+            # print("DEV DEBUG - NOTIFICAÇÃO VIA AZURE FUNCTION")
+            endpoint = provider.endpoint
+            # send_message_azurefunction()
+            
         # Whatsapp 
     # endregion
 

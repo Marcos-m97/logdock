@@ -28,15 +28,18 @@ def load_settings():
 
         app_name = settings["app_name"]                                                 # Nome do app
 
-        notification_enabled=settings["notification_enabled"]                           # Notificação habilitada | desabilitada
-        notification_provider=settings["notification_provider"]                         # Provider de notificação 
-        notification_chat_id=settings["notification_chat_id"]
+        notification_enabled = settings["notification_enabled"]                           # Notificação habilitada | desabilitada
+        notification_provider = settings["notification_provider"]                         # Provider de notificação 
+        notification_endpoint = settings["notification_endpoint"]
 
-        persistence_enabled= settings["persistence_enabled"] 
-        persistence_provider=settings["persistence_provider"] 
-        persistence_connection_string=settings["persistence_connection_string"] 
-        persistence_container=settings["persistence_container"] 
+        notification_telegram_token = settings["notification_telegram_chat_id"]
+        notification_telegram_chat_id = settings["notification_telegram_chat_id"]
 
+        persistence_enabled = settings["persistence_enabled"] 
+        persistence_provider = settings["persistence_provider"]
+
+        persistence_blob_connection_string = settings["persistence_blob_connection_string"] 
+        persistence_blob_container = settings["persistence_blob_container"] 
 
         log_level=str(settings["log_level"]).strip().upper() or "INFO"
 
@@ -63,14 +66,16 @@ def load_settings():
             match notification_provider:
                 case NotificationProvider.AZURE_FUNCTION:
                     notification = AzureFunctionNotification(
-                        enabled=True, endpoint=""
+                        enabled=True,
+                        endpoint=notification_endpoint
                         )
 
                 case NotificationProvider.TELEGRAM:
                     notification = TelegramNotification(
-                        enabled=True, token="", 
-                        chat_id=notification_chat_id, 
-                        endpoint=""
+                        enabled=True, 
+                        token=notification_telegram_token, 
+                        chat_id=notification_telegram_chat_id, 
+                        endpoint=notification_endpoint
                         )
 
         else:
@@ -96,8 +101,8 @@ def load_settings():
                 case PersistenceProvider.AZURE_BLOB_STORAGE:
                     persistence = AzureBlobStoragePersistence(
                         enabled=True, 
-                        connection_string=persistence_connection_string, 
-                        container=persistence_container
+                        connection_string=persistence_blob_connection_string, 
+                        container=persistence_blob_container
                     )
 
         else:

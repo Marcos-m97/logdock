@@ -1,14 +1,18 @@
 {
     "app_name" : "surfmetrics",
     
-    "persistence_enabled" : false,
-    "persistence_provider" : "",
-    "persistence_connection_string" : "",
-    "persistence_container" : "",
-    
     "notification_enabled" : false,
     "notification_provider" : "",
-    "notification_chat_id" : "",
+    "notification_endpoint" : "",
+
+    "notification_telegram_token" : "",
+    "notification_telegram_chat_id" : "",
+
+    "persistence_enabled" : false,
+    "persistence_provider" : "",
+
+    "persistence_blob_connection_string" : "",
+    "persistence_blob_container" : "",
     
     "log_level" : "DEBUG"
 }

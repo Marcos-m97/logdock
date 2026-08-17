@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "logdock"
+version = "0.1.0"
+description = "Biblioteca de logging estruturado com notificações e persistência configurável."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "requests>=2.31.0",
+    "azure-storage-blob>=12.19.0",
+]
+
+[tool.setuptools]
+packages = ["logdock", "logdock.core", "logdock.config"]
+
+[tool.setuptools.package-dir]
+logdock = "."
