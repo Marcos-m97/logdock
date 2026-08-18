@@ -1,12 +1,12 @@
-{
+{   
 
     "log_level" : "DEBUG",
-
+   
     "app_name" : "surfmetrics",
-
+    
     "notification_enabled" : true,
     "notification_provider" : "TELEGRAM",
-
+    
     "persistence_enabled" : false,
     "persistence_provider" : "",
     
@@ -17,10 +17,10 @@
             "precision": "SECOND"
         },
         "app_name": {
-            "enabled": false
+            "enabled": true
         },
         "source": {
-            "enabled": false,
+            "enabled": true,
             "full_path": false
         }
     }
