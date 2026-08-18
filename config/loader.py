@@ -16,8 +16,6 @@ from .settings import (
     AzureBlobStoragePersistence,
     LogFormat,
     LogTimeFormat,
-    AppNameFormat,
-    SourceFormat,
     TimePrecision,
     )
 
@@ -29,7 +27,7 @@ class InvalidSettingsException(Exception):
 def _required_env(name: str) -> str:
     """
     Valida variáveis obrigatórias.
-    Permite que apenas
+    Permite que sejam validados apenas
     """
     value = os.getenv(name)
 
@@ -42,26 +40,25 @@ def _required_env(name: str) -> str:
 
 # =============================================================================
 
-def _required_bool(settings: dict, name: str, default: bool = False) -> bool:
-    value = settings.get(name, default)
+def _load_time_format(settings: dict) -> LogTimeFormat:
+    log_format = settings.get("log_format", {})
 
-    if not isinstance(value, bool):
-        raise InvalidSettingsException(f"'{name}' deve ser true ou false.")
+    if not isinstance(log_format, dict):
+        raise InvalidSettingsException("A configuração 'log_format' deve ser um objeto.")
 
-    return value
-
-
-def _load_time_format(log_format: dict) -> LogTimeFormat:
     time_format = log_format.get("time", {})
 
     if not isinstance(time_format, dict):
         raise InvalidSettingsException(
-            "A configuração 'format.time' deve ser um objeto."
+            "A configuração 'log_format.time' deve ser um objeto."
         )
 
-    enabled = _required_bool(time_format, "enabled")
+    enabled = time_format.get("enabled", False)
     timezone = str(time_format.get("timezone", "UTC")).strip() or "UTC"
     precision_value = str(time_format.get("precision", "SECOND")).strip().upper()
+
+    if not isinstance(enabled, bool):
+        raise InvalidSettingsException("'log_format.time.enabled' deve ser true ou false.")
 
     try:
         precision = TimePrecision(precision_value)
@@ -84,33 +81,6 @@ def _load_time_format(log_format: dict) -> LogTimeFormat:
         precision=precision,
     )
 
-
-def _load_log_format(settings: dict) -> LogFormat:
-    log_format = settings.get("format", settings.get("log_format", {}))
-
-    if not isinstance(log_format, dict):
-        raise InvalidSettingsException("A configuração 'format' deve ser um objeto.")
-
-    app_name_format = log_format.get("app_name", {})
-    source_format = log_format.get("source", {})
-
-    if not isinstance(app_name_format, dict):
-        raise InvalidSettingsException("A configuração 'format.app_name' deve ser um objeto.")
-
-    if not isinstance(source_format, dict):
-        raise InvalidSettingsException("A configuração 'format.source' deve ser um objeto.")
-
-    return LogFormat(
-        time=_load_time_format(log_format),
-        app_name=AppNameFormat(
-            enabled=_required_bool(app_name_format, "enabled"),
-        ),
-        source=SourceFormat(
-            enabled=_required_bool(source_format, "enabled"),
-            full_path=_required_bool(source_format, "full_path"),
-        ),
-    )
-
 # =============================================================================
 
 def load_settings():
@@ -130,7 +100,7 @@ def load_settings():
         persistence_provider = settings["persistence_provider"]
 
         log_level=str(settings["log_level"]).strip().upper() or "INFO"
-        log_format = _load_log_format(settings)
+        log_format = LogFormat(time=_load_time_format(settings))
 
         # =============================================================
         # region Notificação 
