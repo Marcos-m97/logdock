@@ -1,7 +1,9 @@
 # logdock/config.py
 
 import json
+import os
 from pathlib import Path
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from .settings import (
     LogDockSettings, 
     Persistence, 
@@ -12,10 +14,104 @@ from .settings import (
     AzureFunctionNotification,
     TelegramNotification,
     AzureBlobStoragePersistence,
+    LogFormat,
+    LogTimeFormat,
+    AppNameFormat,
+    SourceFormat,
+    TimePrecision,
     )
 
 class InvalidSettingsException(Exception):
     pass
+
+# =============================================================================
+
+def _required_env(name: str) -> str:
+    """
+    Valida variáveis obrigatórias.
+    Permite que apenas
+    """
+    value = os.getenv(name)
+
+    if value is None or not value.strip():
+        raise InvalidSettingsException(
+            f"Variável de ambiente obrigatória não configurada: {name}"
+        )
+
+    return value.strip()
+
+# =============================================================================
+
+def _required_bool(settings: dict, name: str, default: bool = False) -> bool:
+    value = settings.get(name, default)
+
+    if not isinstance(value, bool):
+        raise InvalidSettingsException(f"'{name}' deve ser true ou false.")
+
+    return value
+
+
+def _load_time_format(log_format: dict) -> LogTimeFormat:
+    time_format = log_format.get("time", {})
+
+    if not isinstance(time_format, dict):
+        raise InvalidSettingsException(
+            "A configuração 'format.time' deve ser um objeto."
+        )
+
+    enabled = _required_bool(time_format, "enabled")
+    timezone = str(time_format.get("timezone", "UTC")).strip() or "UTC"
+    precision_value = str(time_format.get("precision", "SECOND")).strip().upper()
+
+    try:
+        precision = TimePrecision(precision_value)
+    except ValueError as error:
+        raise InvalidSettingsException(
+            f"Precisão de horário inválida: '{precision_value}'. "
+            f"Valores suportados: {[item.value for item in TimePrecision]}"
+        ) from error
+
+    try:
+        ZoneInfo(timezone)
+    except ZoneInfoNotFoundError as error:
+        raise InvalidSettingsException(
+            f"Fuso horário inválido ou indisponível: '{timezone}'."
+        ) from error
+
+    return LogTimeFormat(
+        enabled=enabled,
+        timezone=timezone,
+        precision=precision,
+    )
+
+
+def _load_log_format(settings: dict) -> LogFormat:
+    log_format = settings.get("format", settings.get("log_format", {}))
+
+    if not isinstance(log_format, dict):
+        raise InvalidSettingsException("A configuração 'format' deve ser um objeto.")
+
+    app_name_format = log_format.get("app_name", {})
+    source_format = log_format.get("source", {})
+
+    if not isinstance(app_name_format, dict):
+        raise InvalidSettingsException("A configuração 'format.app_name' deve ser um objeto.")
+
+    if not isinstance(source_format, dict):
+        raise InvalidSettingsException("A configuração 'format.source' deve ser um objeto.")
+
+    return LogFormat(
+        time=_load_time_format(log_format),
+        app_name=AppNameFormat(
+            enabled=_required_bool(app_name_format, "enabled"),
+        ),
+        source=SourceFormat(
+            enabled=_required_bool(source_format, "enabled"),
+            full_path=_required_bool(source_format, "full_path"),
+        ),
+    )
+
+# =============================================================================
 
 def load_settings():
     config_path = Path.cwd() / "logdock.json"
@@ -30,18 +126,11 @@ def load_settings():
 
         notification_enabled = settings["notification_enabled"]                           # Notificação habilitada | desabilitada
         notification_provider = settings["notification_provider"]                         # Provider de notificação 
-        notification_endpoint = settings["notification_endpoint"]
-
-        notification_telegram_token = settings["notification_telegram_token"]
-        notification_telegram_chat_id = settings["notification_telegram_chat_id"]
-
         persistence_enabled = settings["persistence_enabled"] 
         persistence_provider = settings["persistence_provider"]
 
-        persistence_blob_connection_string = settings["persistence_blob_connection_string"] 
-        persistence_blob_container = settings["persistence_blob_container"] 
-
         log_level=str(settings["log_level"]).strip().upper() or "INFO"
+        log_format = _load_log_format(settings)
 
         # =============================================================
         # region Notificação 
@@ -68,15 +157,16 @@ def load_settings():
                     notification = AzureFunctionNotification(
                         enabled=True,
                         provider=NotificationProvider.AZURE_FUNCTION,
-                        endpoint=notification_endpoint
+                        endpoint=_required_env("LOGDOCK_AZURE_FUNCTION_ENDPOINT"),
+                        function_key=_required_env("LOGDOCK_AZURE_FUNCTION_KEY"),
                         )
 
                 case NotificationProvider.TELEGRAM:
                     notification = TelegramNotification(
                         enabled=True,
                         provider=NotificationProvider.TELEGRAM, 
-                        token=notification_telegram_token, 
-                        chat_id=notification_telegram_chat_id
+                        token=_required_env("LOGDOCK_TELEGRAM_BOT_TOKEN"),
+                        chat_id=_required_env("LOGDOCK_TELEGRAM_CHAT_ID"),
                         )
 
         else:
@@ -102,8 +192,10 @@ def load_settings():
                 case PersistenceProvider.AZURE_BLOB_STORAGE:
                     persistence = AzureBlobStoragePersistence(
                         enabled=True, 
-                        connection_string=persistence_blob_connection_string, 
-                        container=persistence_blob_container
+                        connection_string=_required_env(
+                            "LOGDOCK_AZURE_BLOB_CONNECTION_STRING"
+                        ),
+                        container=_required_env("LOGDOCK_AZURE_BLOB_CONTAINER"),
                     )
 
         else:
@@ -116,7 +208,7 @@ def load_settings():
             level = Levels(log_level)
         except ValueError:
             raise InvalidSettingsException(
-                f"Level invalido: '{level}'. "
+                f"Level invalido: '{log_level}'. "
                 f"Valores suportados: {[item.value for item in Levels]}"
             )
         
@@ -126,6 +218,7 @@ def load_settings():
             app_name=app_name,
             persistence=persistence,
             notification=notification,
+            log_format=log_format,
             level=level
         )
 

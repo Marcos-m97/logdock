@@ -1,18 +1,28 @@
 {
+
+    "log_level" : "DEBUG",
+
     "app_name" : "surfmetrics",
-    
+
     "notification_enabled" : true,
     "notification_provider" : "TELEGRAM",
-    "notification_endpoint" : "",
-
-    "notification_telegram_token" : "",
-    "notification_telegram_chat_id" : "-1003849727590",
 
     "persistence_enabled" : false,
     "persistence_provider" : "",
-
-    "persistence_blob_connection_string" : "",
-    "persistence_blob_container" : "",
     
-    "log_level" : "DEBUG"
+    "format": {
+        "time": {
+            "enabled": true,
+            "timezone": "America/Sao_Paulo",
+            "precision": "SECOND"
+        },
+        "app_name": {
+            "enabled": false
+        },
+        "source": {
+            "enabled": false,
+            "full_path": false
+        }
+    }
+
 }

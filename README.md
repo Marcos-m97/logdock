@@ -47,3 +47,64 @@ Isso permite:
 * manter o terminal mais limpo em produção;
 * preservar informações detalhadas no armazenamento;
 * enviar somente erros relevantes para o canal de comunicação.
+
+## Variáveis de ambiente
+
+O `logdock.json` contém apenas configurações não sensíveis. Credenciais e dados das
+integrações devem ser fornecidos por variáveis de ambiente:
+
+```env
+LOGDOCK_TELEGRAM_BOT_TOKEN=
+LOGDOCK_TELEGRAM_CHAT_ID=
+LOGDOCK_AZURE_FUNCTION_ENDPOINT=
+LOGDOCK_AZURE_FUNCTION_KEY=
+LOGDOCK_AZURE_BLOB_CONNECTION_STRING=
+LOGDOCK_AZURE_BLOB_CONTAINER=
+```
+
+As variáveis de um provider são obrigatórias somente quando ele está habilitado no
+`logdock.json`. Em Azure Functions, os Application Settings e os valores definidos
+em `local.settings.json` durante o desenvolvimento são expostos ao processo como
+variáveis de ambiente.
+
+## Formatação do horário
+
+O horário do log pode ser habilitado e personalizado no `logdock.json`:
+
+```json
+{
+  "format": {
+    "time": {
+      "enabled": true,
+      "timezone": "America/Sao_Paulo",
+      "precision": "SECOND"
+    }
+  }
+}
+```
+
+As precisões suportadas são `DAY`, `HOUR`, `MINUTE`, `SECOND` e `MILLISECOND`.
+O fuso deve usar um identificador IANA, como `UTC`, `America/Sao_Paulo` ou
+`Europe/Lisbon`. Se `format` não estiver presente, o horário fica desabilitado.
+
+## Nome da aplicação e origem
+
+O nome da aplicação e o arquivo que originou o log também podem ser configurados:
+
+```json
+{
+  "format": {
+    "app_name": {
+      "enabled": true
+    },
+    "source": {
+      "enabled": true,
+      "full_path": false
+    }
+  }
+}
+```
+
+Com `full_path` igual a `false`, somente o nome do arquivo é exibido. Com `true`,
+é exibido seu caminho absoluto. Por padrão, tanto `app_name` quanto `source` ficam
+desabilitados.

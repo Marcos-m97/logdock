@@ -11,10 +11,13 @@ requires-python = ">=3.11"
 dependencies = [
     "requests>=2.31.0",
     "azure-storage-blob>=12.19.0",
+    "tzdata>=2024.1",
 ]
 
 [tool.setuptools]
-packages = ["logdock", "logdock.core", "logdock.config"]
+package-dir = {"" = ".."}
 
-[tool.setuptools.package-dir]
-logdock = "."
+[tool.setuptools.packages.find]
+where = [".."]
+include = ["logdock*"]
+namespaces = true

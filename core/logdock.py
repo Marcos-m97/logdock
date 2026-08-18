@@ -2,6 +2,8 @@ import logging
 from ..config.loader import load_settings
 from ..register.register import register_integrations
 from ..config.settings import TelegramNotification, AzureFunctionNotification, NotificationProvider
+from ..config.loader import InvalidSettingsException
+from .formatter import LogDockFormatter
 
 class LogDock:
 
@@ -15,7 +17,9 @@ class LogDock:
 
             integrations = register_integrations(logdock_settings=self.logdock_settings)
 
-            self.telegram_client = integrations.telegram_client
+            # Carregar integrações
+            if integrations:
+                self.telegram_client = integrations.telegram_client
 
             # print(f"DEBUG: {logdock_settings}")
 
@@ -25,9 +29,11 @@ class LogDock:
             # Configura logging padrão
             logging.basicConfig(
                 level=level,
-                format="%(levelname)s | %(message)s",
-                # format="%(levelname)s | %(name)s | %(message)s",
             )
+
+            formatter = LogDockFormatter(self.logdock_settings.log_format)
+            for handler in logging.getLogger().handlers:
+                handler.setFormatter(formatter)
 
             self.logger = logging.getLogger(app_name)
             
@@ -38,6 +44,8 @@ class LogDock:
 
             # factory 
 
+        except InvalidSettingsException:
+            raise
 
         except Exception as error:
 
@@ -60,7 +68,7 @@ class LogDock:
     # Adicionar origem - apenas o arquivo de onde o log esta sendo emitido sem caminho raiz. 
     # Habilitar opção para ligar desligar o nome do app no log
     # Adicionar suporte para logs com quebra de linhas: ex uma lista onde cada item é uma linha.
-
+    # Adicionar ordenação dinamica dos elementos do log através do logdock.json
 
     # region Métodos de log
     """
@@ -73,26 +81,26 @@ class LogDock:
     """
 
     def info(self, message, notify=False):
-        self.logger.info(message)
+        self.logger.info(message, stacklevel=2)
         if notify:
            self.notify(message)
 
     # ----------------------------------------
     def error(self, message, notify=False):
-        self.logger.error(message)
+        self.logger.error(message, stacklevel=2)
         if notify:
             self.notify(message)
         
     # ----------------------------------------
     def warning(self, message, notify=False):
-        self.logger.warning(message)
+        self.logger.warning(message, stacklevel=2)
         if notify:
             self.notify(message)
             
     # ----------------------------------------
     # Só aparece o log de debug se o log_level for DEBUG (porém debug é nativo de logging, ver um outro nome para filtrar verbosisda)
     def debug(self, message, notify=False):
-        self.logger.debug(message) 
+        self.logger.debug(message, stacklevel=2)
         if notify:
             self.notify(message)
         
@@ -104,55 +112,28 @@ class LogDock:
       self, 
       message : str = None
     ):
-
         """
         Roteador de noticações; 
         - Cada provider de notificação suportado deve ser chamado aqui 
         """
 
-        # Validar se está eneabled se não não deve funcionar mesmo que chamado
+        # Validar se está eneabled se não estiver não deve funcionar mesmo que chamado
         is_enabled = self.logdock_settings.notification.enabled
-        notification_provider = self.logdock_settings.notification.provider
 
         if not is_enabled:
             self.warning("Notificação solicitada porém esta desabilitada")
             return
 
+        notification_provider = self.logdock_settings.notification.provider
 
-        if notification_provider == NotificationProvider.TELEGRAM:
-            self.telegram_client.post_telegram_message(message)
+        match notification_provider:
 
-        if notification_provider == NotificationProvider.AZURE_FUNCTION:
-            pass
+            case NotificationProvider.TELEGRAM:
+                self.telegram_client.post_telegram_message(message)
 
-        
-    #     # Validar qual o tipo de provider com isinstance
-    #     """
+            case NotificationProvider.AZURE_FUNCTION:
+                pass
 
-    #     """ 
-    #     provider = self.logdock_settings.notification
-
-    #     # Telegram
-    #     if isinstance(provider, TelegramNotification):
-    #         # print("DEV DEBUG - NOTIFICAÇÃO VIA TELEGRAM")
-    #         # endpoint = provider.endpoint
-    #         chat_id = provider.chat_id
-    #         token = provider.token
-    #         endpoint = f"https://api.telegram.org/bot{token}/sendMessage"
-
-            
-
-
-    #         # Implementação em pasta|arquivo proprio
-    #         # send_message_telegram()
-            
-    #     # Azurefunction
-    #     if isinstance(provider, AzureFunctionNotification):
-    #         # print("DEV DEBUG - NOTIFICAÇÃO VIA AZURE FUNCTION")
-    #         endpoint = provider.endpoint
-    #         # send_message_azurefunction()
-            
-    #     # Whatsapp 
     # # endregion
 
     # ================================================================================
