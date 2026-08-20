@@ -48,6 +48,33 @@ Isso permite:
 * preservar informações detalhadas no armazenamento;
 * enviar somente erros relevantes para o canal de comunicação.
 
+## Inicialização do projeto
+
+Depois de instalar a biblioteca, inicialize o LogDock na raiz da aplicação:
+
+```bash
+logdock init
+```
+
+O comando cria:
+
+* `logdock.json`, com configurações seguras e integrações desabilitadas;
+* `.env.example`, com todas as variáveis aceitas pela biblioteca;
+* `local.settings.json.example`, com as mesmas variáveis no formato do Azure Functions.
+
+Por padrão, o nome da pasta atual vira o `app_name`. Ele pode ser informado com
+`logdock init --app-name minha-aplicacao`. Arquivos existentes não são sobrescritos;
+nos arquivos de exemplo, somente variáveis ausentes são acrescentadas. Use
+`--force` quando quiser recriar os três arquivos do zero.
+
+Para desenvolvimento local, copie apenas o modelo adequado ao ambiente e preencha
+as credenciais sem versioná-las:
+
+```bash
+cp .env.example .env
+cp local.settings.json.example local.settings.json
+```
+
 ## Variáveis de ambiente
 
 O `logdock.json` contém apenas configurações não sensíveis. Credenciais e dados das

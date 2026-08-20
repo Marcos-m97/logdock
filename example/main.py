@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 
-# Permite executar este arquivo diretamente com `py main.py` dentro de example/.
+# Permite executar este arquivo diretamente py example\main.py a partir da raiz da lib
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
@@ -17,9 +17,9 @@ logdock = LogDock()
 
 logdock.info("teste info")
 
-logdock.error("teste erro")
+# logdock.error("teste erro")
 
-# logdock.error("teste erro com notificação", notify=True)
+logdock.error("teste erro com notificação", notify=True)
 
 logdock.debug("teste debug")
 

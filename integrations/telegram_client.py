@@ -1,4 +1,10 @@
+import logging
+
 import requests
+
+
+logger = logging.getLogger("logdock.internal")
+
 
 class TelegramClient:
     def __init__(self, token: str, chat_id: str):
@@ -7,27 +13,44 @@ class TelegramClient:
         self.chat_id = chat_id
         self.base_url = f"https://api.telegram.org/bot{self.token}/sendMessage"
 
-    def post_telegram_message(self, message):
+    def post_telegram_message(self, message: str) -> int | None:
+        payload = {
+            "chat_id": self.chat_id,
+            "text": message,
+            "parse_mode": "Markdown",
+        }
+
         try:
-            payload = {
-                "chat_id": self.chat_id,
-                "text": message,
-                "parse_mode": "Markdown"
-            }
+            response = requests.post(self.base_url, json=payload, timeout=10)
+            response.raise_for_status()
 
-            resp = requests.post(self.base_url, json=payload, timeout=10)
-            resp.raise_for_status()
+            logger.debug(
+                "Mensagem enviada ao Telegram. Status: %s",
+                response.status_code,
+            )
+            return response.status_code
 
-            print(f"[OK] Mensagem enviada – código {resp.status_code}")
-            return resp.status_code
-
-        except requests.exceptions.HTTPError as e:
-            print(f"[ERRO HTTP] {e}")
-        except requests.exceptions.ConnectionError as e:
-            print(f"[ERRO DE CONEXÃO] {e}")
         except requests.exceptions.Timeout:
-            print("[ERRO] Timeout na requisição")
-        except Exception as e:
-            print(f"[ERRO GERAL] {e}")
+            logger.warning("Timeout ao enviar mensagem ao Telegram.")
 
-        return {}
+        except requests.exceptions.ConnectionError:
+            logger.warning("Erro de conexão ao enviar mensagem ao Telegram.")
+
+        except requests.exceptions.HTTPError as error:
+            status_code = (
+                error.response.status_code
+                if error.response is not None
+                else "desconhecido"
+            )
+            logger.warning(
+                "Erro HTTP ao enviar mensagem ao Telegram. Status: %s",
+                status_code,
+            )
+
+        except requests.exceptions.RequestException as error:
+            logger.warning(
+                "Erro inesperado na requisição ao Telegram: %s.",
+                type(error).__name__,
+            )
+
+        return None

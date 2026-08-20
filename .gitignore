@@ -23,6 +23,7 @@ info.py
 # Environment variables
 .env.*
 !.env.example
+local.settings.json
 
 # Python tooling and test caches
 .pytest_cache/

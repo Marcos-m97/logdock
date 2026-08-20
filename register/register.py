@@ -11,6 +11,7 @@ def register_integrations(logdock_settings: LogDockSettings):
         # A propriedade 'notification' de logdock_settings recebe a dataclass do provider selecionado
         notification_provider = logdock_settings.notification
 
+        # ----------------------------------------------------------------------------    
         # Telegram
         if isinstance(notification_provider, TelegramNotification):
             # print("DEV DEBUG - NOTIFICAÇÃO VIA TELEGRAM")
@@ -24,7 +25,7 @@ def register_integrations(logdock_settings: LogDockSettings):
                 chat_id=chat_id 
             )
 
-            
+        # ----------------------------------------------------------------------------    
         # Azurefunction
         if isinstance(notification_provider, AzureFunctionNotification):
             # print("DEV DEBUG - NOTIFICAÇÃO VIA AZURE FUNCTION")
@@ -33,6 +34,8 @@ def register_integrations(logdock_settings: LogDockSettings):
 
             # az_function_client()
 
+        # ----------------------------------------------------------------------------
+        # Build final 
         logdock_integrations = LogDockIntegrations(
             telegram_client=telegram_client
         )
