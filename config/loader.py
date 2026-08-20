@@ -51,16 +51,9 @@ def _required_bool(settings: dict, name: str, default: bool = False) -> bool:
 
 
 def _load_time_format(log_format: dict) -> LogTimeFormat:
-    time_format = log_format.get("time", {})
-
-    if not isinstance(time_format, dict):
-        raise InvalidSettingsException(
-            "A configuração 'format.time' deve ser um objeto."
-        )
-
-    enabled = _required_bool(time_format, "enabled")
-    timezone = str(time_format.get("timezone", "UTC")).strip() or "UTC"
-    precision_value = str(time_format.get("precision", "SECOND")).strip().upper()
+    enabled = _required_bool(log_format, "time_enabled")
+    timezone = str(log_format.get("timezone", "UTC")).strip() or "UTC"
+    precision_value = str(log_format.get("time_precision", "SECOND")).strip().upper()
 
     try:
         precision = TimePrecision(precision_value)
@@ -85,28 +78,19 @@ def _load_time_format(log_format: dict) -> LogTimeFormat:
 
 
 def _load_log_format(settings: dict) -> LogFormat:
-    log_format = settings.get("format", settings.get("log_format", {}))
+    log_format = settings.get("format", {})
 
     if not isinstance(log_format, dict):
         raise InvalidSettingsException("A configuração 'format' deve ser um objeto.")
 
-    app_name_format = log_format.get("app_name", {})
-    source_format = log_format.get("source", {})
-
-    if not isinstance(app_name_format, dict):
-        raise InvalidSettingsException("A configuração 'format.app_name' deve ser um objeto.")
-
-    if not isinstance(source_format, dict):
-        raise InvalidSettingsException("A configuração 'format.source' deve ser um objeto.")
-
     return LogFormat(
         time=_load_time_format(log_format),
         app_name=AppNameFormat(
-            enabled=_required_bool(app_name_format, "enabled"),
+            enabled=_required_bool(log_format, "app_name_enabled"),
         ),
         source=SourceFormat(
-            enabled=_required_bool(source_format, "enabled"),
-            full_path=_required_bool(source_format, "full_path"),
+            enabled=_required_bool(log_format, "source_enabled"),
+            full_path=_required_bool(log_format, "source_full_path"),
         ),
     )
 
@@ -123,10 +107,23 @@ def load_settings():
 
         app_name = settings["app_name"]                                                 # Nome do app
 
-        notification_enabled = settings["notification_enabled"]                           # Notificação habilitada | desabilitada
-        notification_provider = settings["notification_provider"]                         # Provider de notificação 
-        persistence_enabled = settings["persistence_enabled"] 
-        persistence_provider = settings["persistence_provider"]
+        notification_settings = settings["notification"]
+        persistence_settings = settings["persistence"]
+
+        if not isinstance(notification_settings, dict):
+            raise InvalidSettingsException(
+                "A configuração 'notification' deve ser um objeto."
+            )
+
+        if not isinstance(persistence_settings, dict):
+            raise InvalidSettingsException(
+                "A configuração 'persistence' deve ser um objeto."
+            )
+
+        notification_enabled = _required_bool(notification_settings, "enabled")
+        notification_provider = str(notification_settings.get("provider", "")).strip().upper()
+        persistence_enabled = _required_bool(persistence_settings, "enabled")
+        persistence_provider = str(persistence_settings.get("provider", "")).strip().upper()
 
         log_level=str(settings["log_level"]).strip().upper() or "INFO"
         log_format = _load_log_format(settings)

@@ -1,28 +1,25 @@
-{   
+{
+    "app_name": "surfmetrics",
+    "log_level": "DEBUG",
 
-    "log_level" : "DEBUG",
-   
-    "app_name" : "surfmetrics",
-    
-    "notification_enabled" : true,
-    "notification_provider" : "TELEGRAM",
-    
-    "persistence_enabled" : false,
-    "persistence_provider" : "",
-    
+    "notification": {
+        "enabled": true,
+        "provider": "TELEGRAM"
+    },
+
+    "persistence": {
+        "enabled": false,
+        "provider": ""
+    },
+
     "format": {
-        "time": {
-            "enabled": true,
-            "timezone": "America/Sao_Paulo",
-            "precision": "SECOND"
-        },
-        "app_name": {
-            "enabled": true
-        },
-        "source": {
-            "enabled": true,
-            "full_path": false
-        }
-    }
+        "time_enabled": true,
+        "timezone": "America/Sao_Paulo",
+        "time_precision": "SECOND",
 
+        "app_name_enabled": true,
+
+        "source_enabled": true,
+        "source_full_path": false
+    }
 }
