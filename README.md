@@ -10,7 +10,7 @@ Uma biblioteca Python reutilizável para **logging estruturado por execução**,
 * Exibição de logs no terminal e em ambientes de nuvem.
 * Acúmulo dos registros em memória durante a execução.
 * Persistência de um único arquivo de log ao final de cada execução.
-* Suporte a arquivos **JSON Lines (`.jsonl`)**.
+* Persistência em documentos **JSON (`.json`)** por execução e lote.
 * Resumo final com:
 
   * status;
@@ -61,6 +61,7 @@ O comando cria:
 * `logdock.json`, com configurações seguras e integrações desabilitadas;
 * `.env.example`, com todas as variáveis aceitas pela biblioteca;
 * `local.settings.json.example`, com as mesmas variáveis no formato do Azure Functions.
+* `.gitignore`, criado ou atualizado com a regra `logs/`.
 
 Por padrão, o nome da pasta atual vira o `app_name`. Ele pode ser informado com
 `logdock init --app-name minha-aplicacao`. Arquivos existentes não são sobrescritos;
@@ -112,7 +113,7 @@ except Exception as error:
     raise
 ```
 
-O provider local é o padrão e grava arquivos JSON Lines identificados pela execução:
+O provider local é o padrão e grava documentos JSON identificados pela execução:
 
 ```json
 {
@@ -124,10 +125,11 @@ O provider local é o padrão e grava arquivos JSON Lines identificados pela exe
 }
 ```
 
-Cada registro persistido respeita as opções de `format`: horário, nome da aplicação
-e origem são incluídos somente quando habilitados; a precisão do horário e o uso do
-caminho completo da origem também seguem o `logdock.json`. Cada instância recebe um
-`execution_id` hexadecimal curto para correlacionar seus registros.
+Cada documento possui um bloco `execution`, com o identificador curto e os metadados
+do lote, e um array `logs`. Os registros respeitam as opções de `format`: horário e
+origem são incluídos somente quando habilitados; a precisão do horário e o uso do
+caminho completo da origem também seguem o `logdock.json`. O nome da aplicação,
+quando habilitado, aparece uma única vez nos metadados da execução.
 
 Para persistir no Azure Blob Storage, use `"provider": "AZURE_BLOB_STORAGE"` e
 configure `LOGDOCK_AZURE_BLOB_CONNECTION_STRING` e

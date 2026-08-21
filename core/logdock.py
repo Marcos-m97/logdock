@@ -15,6 +15,9 @@ from ..config.loader import InvalidSettingsException
 from .buffer import LogBufferHandler
 from .formatter import LogDockFormatter
 
+
+internal_logger = logging.getLogger("logdock.internal")
+
 class LogDock:
 
     # region init 
@@ -79,11 +82,10 @@ class LogDock:
 
             self.logger = logging.getLogger("logdock")
 
-            self.logger.warning(
-                "Não foi possível configurar o LogDock. "
-                "Modo básico ativado. "
-                "Persistência e notificação desativadas. "
-                f"Erro: {error}"
+            internal_logger.warning(
+                "LogDock configuration failed. Basic mode enabled; "
+                "persistence and notifications are disabled. Error: %s",
+                error,
             )
     # ================================================================================
     # Adicionar hora, suporte para configurar fuso e nivel de hora em (secs, min, hora, dia, milisec etc) via configjson
@@ -159,7 +161,9 @@ class LogDock:
         is_enabled = self.logdock_settings.notification.enabled
 
         if not is_enabled:
-            self.warning("Notificação solicitada porém esta desabilitada")
+            internal_logger.warning(
+                "Notification requested while notifications are disabled."
+            )
             return
 
         notification_provider = self.logdock_settings.notification.provider
@@ -199,21 +203,35 @@ class LogDock:
                 records_count=0,
             )
 
-        content = "".join(
-            json.dumps(record, ensure_ascii=False) + "\n" for record in records
-        )
-        execution_date = datetime.now(
+        persisted_datetime = datetime.now(
             ZoneInfo(self.logdock_settings.log_format.time.timezone)
-        ).date()
+        )
+        execution = {
+            "id": self.execution_id,
+            "records_count": len(records),
+        }
+        if self.logdock_settings.log_format.app_name.enabled:
+            execution["app_name"] = self.logdock_settings.app_name
+        if self.logdock_settings.log_format.time.enabled:
+            execution["persisted_at"] = LogDockFormatter(
+                self.logdock_settings.log_format
+            ).format_datetime(persisted_datetime)
+
+        document = {
+            "execution": execution,
+            "logs": records,
+        }
+        content = json.dumps(document, indent=2, ensure_ascii=False) + "\n"
+        execution_date = persisted_datetime.date()
         safe_app_name = "".join(
             character if character.isalnum() or character in "-_" else "_"
             for character in self.logdock_settings.app_name
         )
         next_sequence = self._persist_sequence + 1
         file_name = (
-            f"{self.execution_id}.jsonl"
+            f"{self.execution_id}.json"
             if next_sequence == 1
-            else f"{self.execution_id}-{next_sequence}.jsonl"
+            else f"{self.execution_id}-{next_sequence}.json"
         )
         object_name = str(
             Path(safe_app_name)

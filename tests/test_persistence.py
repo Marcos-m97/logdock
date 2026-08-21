@@ -66,9 +66,14 @@ class ManualPersistenceTests(unittest.TestCase):
         self.assertEqual(result.records_count, 2)
         destination = Path(result.location)
         self.assertTrue(destination.exists())
-        records = [json.loads(line) for line in destination.read_text(encoding="utf-8").splitlines()]
+        document = json.loads(destination.read_text(encoding="utf-8"))
+        records = document["logs"]
         self.assertEqual([record["message"] for record in records], ["primeiro registro", "segundo registro"])
-        self.assertTrue(all(record["execution_id"] == self.logdock.execution_id for record in records))
+        self.assertEqual(document["execution"]["id"], self.logdock.execution_id)
+        self.assertEqual(document["execution"]["records_count"], 2)
+        self.assertEqual(document["execution"]["app_name"], "test-app")
+        self.assertTrue(all("execution_id" not in record for record in records))
+        self.assertTrue(all("app_name" not in record for record in records))
         self.assertTrue(all(record["source"] == "test_persistence.py" for record in records))
         self.assertEqual(len(self.logdock.execution_id), 12)
 
@@ -91,7 +96,7 @@ class ManualPersistenceTests(unittest.TestCase):
         self.assertNotEqual(first_result.location, second_result.location)
         self.assertTrue(Path(first_result.location).exists())
         self.assertTrue(Path(second_result.location).exists())
-        self.assertTrue(second_result.location.endswith("-2.jsonl"))
+        self.assertTrue(second_result.location.endswith("-2.json"))
 
     def test_persists_without_timestamp_when_time_is_disabled(self):
         self.logdock.logdock_settings.log_format.time.enabled = False
@@ -99,8 +104,17 @@ class ManualPersistenceTests(unittest.TestCase):
 
         result = self.logdock.persist()
 
-        record = json.loads(Path(result.location).read_text(encoding="utf-8"))
-        self.assertNotIn("timestamp", record)
+        document = json.loads(Path(result.location).read_text(encoding="utf-8"))
+        self.assertNotIn("persisted_at", document["execution"])
+        self.assertNotIn("timestamp", document["logs"][0])
+
+    def test_internal_notification_warning_is_not_persisted(self):
+        self.logdock.notify("não deve ser enviado")
+
+        result = self.logdock.persist()
+
+        self.assertTrue(result.success)
+        self.assertEqual(result.records_count, 0)
 
 
 class DisabledPersistenceTests(unittest.TestCase):
@@ -141,7 +155,6 @@ class BufferFormattingTests(unittest.TestCase):
             [
                 {
                     "level": "INFO",
-                    "execution_id": "short-id",
                     "message": "mensagem",
                 }
             ],

@@ -3,7 +3,7 @@ import logging
 import requests
 
 
-logger = logging.getLogger("logdock.internal")
+internal_logger = logging.getLogger("logdock.internal")
 
 
 class TelegramClient:
@@ -24,17 +24,19 @@ class TelegramClient:
             response = requests.post(self.base_url, json=payload, timeout=10)
             response.raise_for_status()
 
-            logger.debug(
-                "Mensagem enviada ao Telegram. Status: %s",
+            internal_logger.debug(
+                "Telegram message sent successfully. Status: %s",
                 response.status_code,
             )
             return response.status_code
 
         except requests.exceptions.Timeout:
-            logger.warning("Timeout ao enviar mensagem ao Telegram.")
+            internal_logger.warning("Telegram request timed out.")
 
         except requests.exceptions.ConnectionError:
-            logger.warning("Erro de conexão ao enviar mensagem ao Telegram.")
+            internal_logger.warning(
+                "Connection error while sending a Telegram message."
+            )
 
         except requests.exceptions.HTTPError as error:
             status_code = (
@@ -42,14 +44,14 @@ class TelegramClient:
                 if error.response is not None
                 else "desconhecido"
             )
-            logger.warning(
-                "Erro HTTP ao enviar mensagem ao Telegram. Status: %s",
+            internal_logger.warning(
+                "Telegram request failed with HTTP status %s.",
                 status_code,
             )
 
         except requests.exceptions.RequestException as error:
-            logger.warning(
-                "Erro inesperado na requisição ao Telegram: %s.",
+            internal_logger.warning(
+                "Unexpected Telegram request error: %s.",
                 type(error).__name__,
             )
 

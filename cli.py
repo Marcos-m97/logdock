@@ -104,6 +104,30 @@ def _update_local_settings_example(path: Path, force: bool) -> str:
     return f"atualizado ({len(missing)} variável(is) adicionada(s))"
 
 
+def _update_gitignore(path: Path) -> str:
+    rule = "logs/"
+    section = f"# LogDock\n{rule}\n"
+
+    if not path.exists():
+        path.write_text(section, encoding="utf-8")
+        return "criado"
+
+    content = path.read_text(encoding="utf-8")
+    normalized_rules = {
+        line.strip().lstrip("/").rstrip("/")
+        for line in content.splitlines()
+        if line.strip() and not line.lstrip().startswith(("#", "!"))
+    }
+    if "logs" in normalized_rules:
+        return "mantido"
+
+    separator = ""
+    if content:
+        separator = "\n" if content.endswith("\n") else "\n\n"
+    path.write_text(content + separator + section, encoding="utf-8")
+    return "atualizado (adicionado logs/)"
+
+
 def init_project(
     directory: Path, app_name: str | None = None, force: bool = False
 ) -> list[tuple[Path, str]]:
@@ -121,6 +145,7 @@ def init_project(
             directory / "logdock.json",
             _write_json(directory / "logdock.json", _default_config(resolved_app_name), force),
         ),
+        (directory / ".gitignore", _update_gitignore(directory / ".gitignore")),
     ]
 
 
@@ -138,7 +163,7 @@ def build_parser() -> argparse.ArgumentParser:
     init_parser.add_argument(
         "--force",
         action="store_true",
-        help="sobrescreve os três arquivos com os valores padrão",
+        help="sobrescreve os arquivos de configuração com os valores padrão",
     )
     return parser
 

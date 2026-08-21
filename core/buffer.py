@@ -21,9 +21,6 @@ class LogBufferHandler(logging.Handler):
         item = {}
         if self.log_format.time.enabled:
             item["timestamp"] = self.log_formatter.formatTime(record)
-        if self.log_format.app_name.enabled:
-            item["app_name"] = record.name
-
         item["level"] = record.levelname
 
         if self.log_format.source.enabled:
@@ -33,7 +30,6 @@ class LogBufferHandler(logging.Handler):
                 else record.filename
             )
 
-        item["execution_id"] = self.execution_id
         item["message"] = record.getMessage()
         with self._records_lock:
             self._records.append(item)

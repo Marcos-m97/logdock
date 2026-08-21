@@ -3,7 +3,7 @@
     "log_level": "DEBUG",
 
     "notification": {
-        "enabled": false,
+        "enabled": true,
         "provider": "TELEGRAM"
     },
 
@@ -16,11 +16,11 @@
     "format": {
         "time_enabled": true,
         "timezone": "America/Sao_Paulo",
-        "time_precision": "HOUR",
+        "time_precision": "SECOND",
 
         "app_name_enabled": false,
 
         "source_enabled": true,
-        "source_full_path": false
+        "source_full_path": true
     }
 }

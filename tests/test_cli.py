@@ -26,6 +26,10 @@ class InitProjectTests(unittest.TestCase):
             for name in ENV_DEFAULTS:
                 self.assertIn(f"{name}=", env)
                 self.assertIn(name, local["Values"])
+            self.assertEqual(
+                (root / ".gitignore").read_text(encoding="utf-8"),
+                "# LogDock\nlogs/\n",
+            )
 
     def test_preserves_existing_files_and_adds_missing_variables(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -36,6 +40,7 @@ class InitProjectTests(unittest.TestCase):
             (root / "local.settings.json.example").write_text(
                 '{"Values": {"CUSTOM": "value"}}\n', encoding="utf-8"
             )
+            (root / ".gitignore").write_text(".venv/\n", encoding="utf-8")
 
             init_project(root, app_name="ignored")
 
@@ -46,6 +51,14 @@ class InitProjectTests(unittest.TestCase):
             )
             self.assertEqual(local["Values"]["CUSTOM"], "value")
             self.assertTrue(set(ENV_DEFAULTS).issubset(local["Values"]))
+            self.assertEqual(
+                (root / ".gitignore").read_text(encoding="utf-8"),
+                ".venv/\n\n# LogDock\nlogs/\n",
+            )
+
+            init_project(root)
+            gitignore = (root / ".gitignore").read_text(encoding="utf-8")
+            self.assertEqual(gitignore.count("logs/"), 1)
 
 
 if __name__ == "__main__":

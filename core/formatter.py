@@ -30,6 +30,11 @@ class LogDockFormatter(logging.Formatter):
     def formatTime(self, record, datefmt=None):
         log_datetime = datetime.fromtimestamp(record.created, tz=self.timezone)
 
+        return self.format_datetime(log_datetime)
+
+    def format_datetime(self, log_datetime: datetime) -> str:
+        """Formata um datetime com as mesmas regras usadas nos registros."""
+
         formats = {
             TimePrecision.DAY: "%Y-%m-%d",
             TimePrecision.HOUR: "%Y-%m-%d %H",
