@@ -24,3 +24,9 @@ logdock.error("teste erro com notificação", notify=True)
 logdock.debug("teste debug")
 
 logdock.warning("teste warning")
+
+# A persistência nunca ocorre automaticamente. Quando habilitada no
+# logdock.json, o desenvolvedor decide explicitamente quando chamá-la.
+result = logdock.persist()
+if not result.success:
+    logdock.warning(f"Logs não persistidos: {result.error}")

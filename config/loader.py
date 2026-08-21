@@ -13,6 +13,7 @@ from .settings import (
     PersistenceProvider,
     AzureFunctionNotification,
     TelegramNotification,
+    LocalPersistence,
     AzureBlobStoragePersistence,
     LogFormat,
     LogTimeFormat,
@@ -123,7 +124,10 @@ def load_settings():
         notification_enabled = _required_bool(notification_settings, "enabled")
         notification_provider = str(notification_settings.get("provider", "")).strip().upper()
         persistence_enabled = _required_bool(persistence_settings, "enabled")
-        persistence_provider = str(persistence_settings.get("provider", "")).strip().upper()
+        persistence_provider = (
+            str(persistence_settings.get("provider", "LOCAL")).strip().upper()
+            or "LOCAL"
+        )
 
         log_level=str(settings["log_level"]).strip().upper() or "INFO"
         log_format = _load_log_format(settings)
@@ -179,15 +183,28 @@ def load_settings():
                 persistence_provider = PersistenceProvider(persistence_provider)
             except ValueError:
                 raise InvalidSettingsException(
-                    f"Notification provider inválido: '{persistence_provider}'. "
+                    f"Persistence provider inválido: '{persistence_provider}'. "
                     f"Valores suportados: {[item.value for item in PersistenceProvider]}"
                 )
 
             # Instanciar notification com base no provider identificado: 
             match persistence_provider:
+                case PersistenceProvider.LOCAL:
+                    local_path = str(persistence_settings.get("path", "./logs")).strip()
+                    if not local_path:
+                        raise InvalidSettingsException(
+                            "O caminho da persistência local não pode ser vazio."
+                        )
+                    persistence = LocalPersistence(
+                        enabled=True,
+                        provider=PersistenceProvider.LOCAL,
+                        path=local_path,
+                    )
+
                 case PersistenceProvider.AZURE_BLOB_STORAGE:
                     persistence = AzureBlobStoragePersistence(
-                        enabled=True, 
+                        enabled=True,
+                        provider=PersistenceProvider.AZURE_BLOB_STORAGE,
                         connection_string=_required_env(
                             "LOGDOCK_AZURE_BLOB_CONNECTION_STRING"
                         ),

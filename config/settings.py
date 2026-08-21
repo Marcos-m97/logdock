@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from enum import StrEnum
 from ..integrations.telegram_client import TelegramClient
+from ..integrations.persistence import PersistenceClient
 
 # ========================================================
 
@@ -25,16 +26,30 @@ class TelegramNotification(Notification):
 
 # ========================================================
 class PersistenceProvider(StrEnum):
+    LOCAL = "LOCAL"
     AZURE_BLOB_STORAGE = "AZURE_BLOB_STORAGE"
   
 @dataclass
 class Persistence:
     enabled: bool = False
+    provider: PersistenceProvider | None = None
+
+@dataclass
+class LocalPersistence(Persistence):
+    path: str = "./logs"
 
 @dataclass
 class AzureBlobStoragePersistence(Persistence):
     connection_string: str | None = None
     container: str | None = None
+
+@dataclass(frozen=True)
+class PersistResult:
+    success: bool
+    provider: str | None
+    location: str | None
+    records_count: int
+    error: str | None = None
 
 # ========================================================
 class Levels(StrEnum):
@@ -87,6 +102,6 @@ class LogDockSettings:
 @dataclass
 class LogDockIntegrations:
     telegram_client: TelegramClient | None = None
-    azure_functions_client : str | None = None
-    azure_blob_storage_client : str | None = None
+    azure_functions_client: str | None = None
+    persistence_client: PersistenceClient | None = None
 

@@ -1,8 +1,18 @@
+import json
 import logging
+from datetime import datetime
+from pathlib import Path
+from uuid import uuid4
+from zoneinfo import ZoneInfo
+
 from ..config.loader import load_settings
 from ..register.register import register_integrations
-from ..config.settings import TelegramNotification, AzureFunctionNotification, NotificationProvider
+from ..config.settings import (
+    NotificationProvider,
+    PersistResult,
+)
 from ..config.loader import InvalidSettingsException
+from .buffer import LogBufferHandler
 from .formatter import LogDockFormatter
 
 class LogDock:
@@ -10,6 +20,11 @@ class LogDock:
     # region init 
     def __init__(self):
         self.logger = None
+        self.execution_id = uuid4().hex[:12]
+        self._buffer_handler = None
+        self._persist_sequence = 0
+        self.telegram_client = None
+        self.persistence_client = None
 
         try:
             # Carrega configuraçõe
@@ -18,8 +33,8 @@ class LogDock:
             integrations = register_integrations(logdock_settings=self.logdock_settings)
 
             # Carregar integrações
-            if integrations:
-                self.telegram_client = integrations.telegram_client
+            self.telegram_client = integrations.telegram_client
+            self.persistence_client = integrations.persistence_client
 
             # print(f"DEBUG: {logdock_settings}")
 
@@ -38,6 +53,13 @@ class LogDock:
             self.logger = logging.getLogger(app_name)
             
             self.logger.setLevel(level)
+
+            if self.logdock_settings.persistence.enabled:
+                self._buffer_handler = LogBufferHandler(
+                    execution_id=self.execution_id,
+                    log_format=self.logdock_settings.log_format,
+                )
+                self.logger.addHandler(self._buffer_handler)
 
             logging.getLogger("urllib3").setLevel(logging.WARNING)
             logging.getLogger("requests").setLevel(logging.WARNING)
@@ -81,26 +103,42 @@ class LogDock:
     """
 
     def info(self, message, notify=False):
-        self.logger.info(message, stacklevel=2)
+        self.logger.info(
+            message,
+            extra={"logdock_execution_id": self.execution_id},
+            stacklevel=2,
+        )
         if notify:
            self.notify(message)
 
     # ----------------------------------------
     def error(self, message, notify=False):
-        self.logger.error(message, stacklevel=2)
+        self.logger.error(
+            message,
+            extra={"logdock_execution_id": self.execution_id},
+            stacklevel=2,
+        )
         if notify:
             self.notify(message)
         
     # ----------------------------------------
     def warning(self, message, notify=False):
-        self.logger.warning(message, stacklevel=2)
+        self.logger.warning(
+            message,
+            extra={"logdock_execution_id": self.execution_id},
+            stacklevel=2,
+        )
         if notify:
             self.notify(message)
             
     # ----------------------------------------
     # Só aparece o log de debug se o log_level for DEBUG (porém debug é nativo de logging, ver um outro nome para filtrar verbosisda)
     def debug(self, message, notify=False):
-        self.logger.debug(message, stacklevel=2)
+        self.logger.debug(
+            message,
+            extra={"logdock_execution_id": self.execution_id},
+            stacklevel=2,
+        )
         if notify:
             self.notify(message)
         
@@ -138,9 +176,70 @@ class LogDock:
 
     # ================================================================================
     # region Persistencia
-    def persist(self):
-        """
-        Implemetar futuramente 
-        """
-        pass
+    def persist(self) -> PersistResult:
+        """Persiste manualmente os registros acumulados nesta execução."""
+        settings = getattr(self, "logdock_settings", None)
+        persistence = getattr(settings, "persistence", None)
+        if not persistence or not persistence.enabled:
+            return PersistResult(
+                success=False,
+                provider=None,
+                location=None,
+                records_count=0,
+                error="Persistência desabilitada.",
+            )
+
+        records = self._buffer_handler.snapshot()
+        provider = persistence.provider.value
+        if not records:
+            return PersistResult(
+                success=True,
+                provider=provider,
+                location=None,
+                records_count=0,
+            )
+
+        content = "".join(
+            json.dumps(record, ensure_ascii=False) + "\n" for record in records
+        )
+        execution_date = datetime.now(
+            ZoneInfo(self.logdock_settings.log_format.time.timezone)
+        ).date()
+        safe_app_name = "".join(
+            character if character.isalnum() or character in "-_" else "_"
+            for character in self.logdock_settings.app_name
+        )
+        next_sequence = self._persist_sequence + 1
+        file_name = (
+            f"{self.execution_id}.jsonl"
+            if next_sequence == 1
+            else f"{self.execution_id}-{next_sequence}.jsonl"
+        )
+        object_name = str(
+            Path(safe_app_name)
+            / execution_date.isoformat()
+            / file_name
+        )
+
+        try:
+            if self.persistence_client is None:
+                raise ValueError(f"Provider não implementado: {provider}")
+            location = self.persistence_client.persist(content, object_name)
+        except Exception as error:
+            return PersistResult(
+                success=False,
+                provider=provider,
+                location=None,
+                records_count=len(records),
+                error=f"{type(error).__name__}: {error}",
+            )
+
+        self._buffer_handler.discard(len(records))
+        self._persist_sequence = next_sequence
+        return PersistResult(
+            success=True,
+            provider=provider,
+            location=location,
+            records_count=len(records),
+        )
     # endregion

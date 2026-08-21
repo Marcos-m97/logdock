@@ -94,6 +94,46 @@ As variáveis de um provider são obrigatórias somente quando ele está habilit
 em `local.settings.json` durante o desenvolvimento são expostos ao processo como
 variáveis de ambiente.
 
+## Persistência manual
+
+O LogDock nunca persiste registros automaticamente. Quando a persistência está
+habilitada, os logs da execução ficam em memória até que `persist()` seja chamado:
+
+```python
+logdock = LogDock()
+
+try:
+    logdock.info("Processamento iniciado")
+    executar_processo()
+    result = logdock.persist()
+except Exception as error:
+    logdock.error(f"Falha no processamento: {error}")
+    result = logdock.persist()
+    raise
+```
+
+O provider local é o padrão e grava arquivos JSON Lines identificados pela execução:
+
+```json
+{
+  "persistence": {
+    "enabled": true,
+    "provider": "LOCAL",
+    "path": "./logs"
+  }
+}
+```
+
+Cada registro persistido respeita as opções de `format`: horário, nome da aplicação
+e origem são incluídos somente quando habilitados; a precisão do horário e o uso do
+caminho completo da origem também seguem o `logdock.json`. Cada instância recebe um
+`execution_id` hexadecimal curto para correlacionar seus registros.
+
+Para persistir no Azure Blob Storage, use `"provider": "AZURE_BLOB_STORAGE"` e
+configure `LOGDOCK_AZURE_BLOB_CONNECTION_STRING` e
+`LOGDOCK_AZURE_BLOB_CONTAINER`. Em caso de sucesso, o buffer persistido é limpo;
+em caso de falha, ele é preservado para uma nova tentativa.
+
 ## Formatação do horário
 
 O horário do log pode ser habilitado e personalizado no `logdock.json`:

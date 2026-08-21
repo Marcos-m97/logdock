@@ -16,6 +16,8 @@ class InitProjectTests(unittest.TestCase):
             self.assertEqual(config["app_name"], "sample-app")
             self.assertFalse(config["notification"]["enabled"])
             self.assertFalse(config["persistence"]["enabled"])
+            self.assertEqual(config["persistence"]["provider"], "LOCAL")
+            self.assertEqual(config["persistence"]["path"], "./logs")
 
             env = (root / ".env.example").read_text(encoding="utf-8")
             local = json.loads(

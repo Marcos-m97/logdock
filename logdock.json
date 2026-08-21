@@ -3,21 +3,22 @@
     "log_level": "DEBUG",
 
     "notification": {
-        "enabled": true,
+        "enabled": false,
         "provider": "TELEGRAM"
     },
 
     "persistence": {
-        "enabled": false,
-        "provider": ""
+        "enabled": true,
+        "provider": "LOCAL",
+        "path": "./logs"
     },
 
     "format": {
         "time_enabled": true,
         "timezone": "America/Sao_Paulo",
-        "time_precision": "SECOND",
+        "time_precision": "HOUR",
 
-        "app_name_enabled": true,
+        "app_name_enabled": false,
 
         "source_enabled": true,
         "source_full_path": false

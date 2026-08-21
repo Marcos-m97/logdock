@@ -1,44 +1,48 @@
+from ..config.settings import (
+    AzureBlobStoragePersistence,
+    AzureFunctionNotification,
+    LocalPersistence,
+    LogDockIntegrations,
+    LogDockSettings,
+    TelegramNotification,
+)
+from ..integrations.persistence import (
+    AzureBlobPersistenceClient,
+    LocalPersistenceClient,
+)
 from ..integrations.telegram_client import TelegramClient
-from ..config.settings import LogDockSettings, LogDockIntegrations, TelegramNotification, AzureFunctionNotification
 
-def register_integrations(logdock_settings: LogDockSettings):
-  
-    notification_enabled = logdock_settings.notification.enabled
 
-    if notification_enabled:
-    # Validar qual o tipo de provider com isinstance
-        
-        # A propriedade 'notification' de logdock_settings recebe a dataclass do provider selecionado
-        notification_provider = logdock_settings.notification
+def register_integrations(logdock_settings: LogDockSettings) -> LogDockIntegrations:
+    telegram_client = None
+    azure_functions_client = None
+    persistence_client = None
 
-        # ----------------------------------------------------------------------------    
-        # Telegram
-        if isinstance(notification_provider, TelegramNotification):
-            # print("DEV DEBUG - NOTIFICAÇÃO VIA TELEGRAM")
-            # endpoint = provider.endpoint
-            token = notification_provider.token
-            chat_id = notification_provider.chat_id
+    if logdock_settings.notification.enabled:
+        notification = logdock_settings.notification
 
-            # Instancia o client do telegram
+        if isinstance(notification, TelegramNotification):
             telegram_client = TelegramClient(
-                token=token,
-                chat_id=chat_id 
+                token=notification.token,
+                chat_id=notification.chat_id,
+            )
+        elif isinstance(notification, AzureFunctionNotification):
+            # Cliente da Azure Function ainda não foi implementado.
+            azure_functions_client = notification.endpoint
+
+    if logdock_settings.persistence.enabled:
+        persistence = logdock_settings.persistence
+
+        if isinstance(persistence, LocalPersistence):
+            persistence_client = LocalPersistenceClient(path=persistence.path)
+        elif isinstance(persistence, AzureBlobStoragePersistence):
+            persistence_client = AzureBlobPersistenceClient(
+                connection_string=persistence.connection_string,
+                container=persistence.container,
             )
 
-        # ----------------------------------------------------------------------------    
-        # Azurefunction
-        if isinstance(notification_provider, AzureFunctionNotification):
-            # print("DEV DEBUG - NOTIFICAÇÃO VIA AZURE FUNCTION")
-            endpoint = notification_provider.endpoint
-            # send_message_azurefunction()
-
-            # az_function_client()
-
-        # ----------------------------------------------------------------------------
-        # Build final 
-        logdock_integrations = LogDockIntegrations(
-            telegram_client=telegram_client
-        )
-
-        return logdock_integrations
-
+    return LogDockIntegrations(
+        telegram_client=telegram_client,
+        azure_functions_client=azure_functions_client,
+        persistence_client=persistence_client,
+    )

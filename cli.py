@@ -18,7 +18,11 @@ def _default_config(app_name: str) -> dict:
         "app_name": app_name,
         "log_level": "INFO",
         "notification": {"enabled": False, "provider": ""},
-        "persistence": {"enabled": False, "provider": ""},
+        "persistence": {
+            "enabled": False,
+            "provider": "LOCAL",
+            "path": "./logs",
+        },
         "format": {
             "time_enabled": True,
             "timezone": "UTC",
